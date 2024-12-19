@@ -1,6 +1,6 @@
 `timescale 1ns / 1ps
 
-module nexys_a7_fpga_template_tb;
+module nexys_a7_fpga_libs_tb;
     // Inputs
     logic clk100mhz;
     logic cpu_resetn;
@@ -10,7 +10,7 @@ module nexys_a7_fpga_template_tb;
     logic [15:0] led;
 
     // Instantiate the Unit Under Test (UUT)
-    nexys_a7_fpga_template uut (
+    nexys_a7_fpga_libs uut (
         .clk100mhz(clk100mhz),
         .cpu_resetn(cpu_resetn),
         .sw(sw),

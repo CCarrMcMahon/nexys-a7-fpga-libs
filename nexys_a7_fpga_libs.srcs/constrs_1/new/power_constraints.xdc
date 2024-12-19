@@ -16,10 +16,10 @@
 ## - v1.0: Initial release.
 ##
 ## License Info:
-## This file is provided under the [Your License Name Here]. Please review the terms and conditions before use.
+## This file is provided under the MIT license. Please review the terms and conditions before use.
 ##
-## Author: [Your Name]
-## Date: [Current Date]
+## Author: Christopher McMahon
+## Date: 12/19/2024
 ########################################################################################################################
 
 # Power Supply Constraints

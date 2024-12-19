@@ -1,10 +1,10 @@
 Copyright 1986-2022 Xilinx, Inc. All Rights Reserved. Copyright 2022-2024 Advanced Micro Devices, Inc. All Rights Reserved.
 ---------------------------------------------------------------------------------------------------------------------------------------------
 | Tool Version : Vivado v.2024.2 (win64) Build 5239630 Fri Nov 08 22:35:27 MST 2024
-| Date         : Sat Dec 14 22:18:56 2024
+| Date         : Thu Dec 19 01:45:31 2024
 | Host         : CHRIS-DESKTOP running 64-bit major release  (build 9200)
-| Command      : report_clock_utilization -file nexys_a7_fpga_template_clock_utilization_routed.rpt
-| Design       : nexys_a7_fpga_template
+| Command      : report_clock_utilization -file nexys_a7_fpga_libs_clock_utilization_routed.rpt
+| Design       : nexys_a7_fpga_libs
 | Device       : 7a100t-csg324
 | Speed File   : -1  PRODUCTION 1.23 2018-06-13
 | Design State : Routed

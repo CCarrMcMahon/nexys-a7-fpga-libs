@@ -24,9 +24,9 @@ To get started with the `nexys-a7-fpga-libs` project, follow these steps:
 
 1. Clone the repository:
 
-```bash
-git clone git@github.com:CCarrMcMahon/nexys-a7-fpga-libs.git
-```
+    ```bash
+    git clone git@github.com:CCarrMcMahon/nexys-a7-fpga-libs.git
+    ```
 
 2. Open the project in Vivado:
 

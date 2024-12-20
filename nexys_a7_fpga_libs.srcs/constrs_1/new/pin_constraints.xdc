@@ -114,7 +114,7 @@ set_property -dict {PACKAGE_PIN V11 IOSTANDARD LVCMOS33} [get_ports {led[15]}]
 #### Pmod Ports ####
 ### PMOD-2x6-S: Pmod System Board Header 2x6, 100mil spaced
 ## JA
-# set_property -dict {PACKAGE_PIN C17 IOSTANDARD LVCMOS33} [get_ports {ja[0]}];  # IO_L20N_T3_A19_15
+set_property -dict {PACKAGE_PIN C17 IOSTANDARD LVCMOS33} [get_ports {ja[0]}];  # IO_L20N_T3_A19_15
 # set_property -dict {PACKAGE_PIN D18 IOSTANDARD LVCMOS33} [get_ports {ja[1]}];  # IO_L21N_T3_DQS_A18_15
 # set_property -dict {PACKAGE_PIN E18 IOSTANDARD LVCMOS33} [get_ports {ja[2]}];  # IO_L21P_T3_DQS_15
 # set_property -dict {PACKAGE_PIN G17 IOSTANDARD LVCMOS33} [get_ports {ja[3]}];  # IO_L18N_T2_A23_15

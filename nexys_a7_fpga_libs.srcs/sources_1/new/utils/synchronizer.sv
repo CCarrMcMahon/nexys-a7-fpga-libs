@@ -7,6 +7,7 @@
  * edge of the clock. The synchronized signal is output on the last stage of the chain.
  *
  * @param STAGES Number of synchronization stages, must be >= 2 (default: 2)
+ *
  * @input clk Input clock
  * @input rst Reset signal
  * @input async_signal Asynchronous input signal
@@ -17,12 +18,17 @@
  * @date 12-19-2024
  */
 module synchronizer #(
-    parameter integer STAGES = 2  // Number of synchronization stages, must be >= 2
+    parameter integer STAGES = 2
 ) (
-    input logic clk,  // Input clock
-    input logic rst,  // Reset signal
-    input logic async_signal,  // Asynchronous input signal
-    output logic sync_signal  // Synchronized output signal
+    // Main clock and reset signals
+    input logic clk,
+    input logic rst,
+
+    // Asynchronous input signal
+    input logic async_signal,
+
+    // Synchronized output signal
+    output logic sync_signal
 );
 
     // Register array to hold synchronization stages

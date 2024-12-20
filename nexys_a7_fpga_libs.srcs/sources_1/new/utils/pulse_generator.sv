@@ -1,13 +1,14 @@
 /**
  * @module pulse_generator
- * @brief Generates a pulse with configurable frequency, width, and offset.
+ * @brief Generates a pulse with configurable frequency, duty cycle, and offset.
  *
- * This module generates a pulse with a configurable frequency, width, and offset. The pulse is generated on the rising
- * edge of the clock when the enable signal is high. The pulse can be cleared asynchronously using the clear signal.
+ * This module generates a pulse with a configurable frequency, duty cycle, and offset. The pulse is generated on the
+ * rising edge of the clock when the enable signal is high. The pulse can be cleared asynchronously using the clear
+ * signal. The pulse output signal is high for the duration of the pulse and low otherwise.
  *
  * @param CLK_FREQ Clock frequency in Hz (default: 100 MHz)
  * @param PULSE_FREQ Pulse frequency in Hz (default: 100 Hz)
- * @param WIDTH_PERCENT Width of the pulse as a percentage of the period (default: 10%)
+ * @param DUTY_CYCLE Duty cycle of the pulse as a percentage of the period (default: 10%)
  * @param OFFSET_PERCENT Offset to the start of the pulse as a percentage of the period (default: 0%)
  *
  * @input clk Input clock
@@ -23,7 +24,7 @@
 module pulse_generator #(
     parameter integer CLK_FREQ = 100_000_000,
     parameter integer PULSE_FREQ = 100,
-    parameter integer WIDTH_PERCENT = 10,
+    parameter integer DUTY_CYCLE = 10,
     parameter integer OFFSET_PERCENT = 0
 ) (
     // Main clock and reset signals
@@ -38,9 +39,9 @@ module pulse_generator #(
     output logic pulse_output
 );
 
-    // Calculate the number of clock cycles for the period, width, and offset
+    // Calculate the number of clock cycles for the period, duty cycle, and offset
     localparam integer PulsePeriod = CLK_FREQ / PULSE_FREQ;
-    localparam integer PulseWidth = (PulsePeriod * WIDTH_PERCENT) / 100;
+    localparam integer PulseWidth = (PulsePeriod * DUTY_CYCLE) / 100;
     localparam integer PulseOffset = (PulsePeriod * OFFSET_PERCENT) / 100;
 
     // Counter to keep track of the current clock cycle within the period

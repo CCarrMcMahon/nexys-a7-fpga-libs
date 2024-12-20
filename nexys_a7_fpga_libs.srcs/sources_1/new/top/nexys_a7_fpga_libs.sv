@@ -2,13 +2,14 @@ module nexys_a7_fpga_libs (
     input logic clk100mhz,
     input logic cpu_resetn,
     input logic [15:0] sw,
-    output logic [15:0] led
+    output logic [15:0] led,
+    output logic [0:0] ja
 );
 
     // Parameters for the pulse_generator instance
     localparam integer ClkFreq = 100_000_000;
     localparam integer PulseFreq = 10;  // 10 Hz pulse frequency
-    localparam integer WidthPercent = 50;  // 50% duty cycle
+    localparam integer DutyCycle = 50;  // 50% duty cycle
     localparam integer OffsetPercent = 0;
 
     // Signals for the pulse_generator instance
@@ -20,7 +21,7 @@ module nexys_a7_fpga_libs (
     pulse_generator #(
         .CLK_FREQ(ClkFreq),
         .PULSE_FREQ(PulseFreq),
-        .WIDTH_PERCENT(WidthPercent),
+        .DUTY_CYCLE(DutyCycle),
         .OFFSET_PERCENT(OffsetPercent)
     ) pulse_gen (
         .clk(clk100mhz),
@@ -41,6 +42,9 @@ module nexys_a7_fpga_libs (
 
     // Enable the pulse generator
     assign enable = 1;
-    assign clear  = 0;
+    assign clear = 0;
+
+    // Visualize the pulse output on the JA header
+    assign ja = pulse_output;
 
 endmodule

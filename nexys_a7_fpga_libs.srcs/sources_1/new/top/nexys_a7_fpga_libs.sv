@@ -10,7 +10,7 @@ module nexys_a7_fpga_libs (
     localparam integer ClkFreq = 100_000_000;
     localparam integer PulseFreq = 10;  // 10 Hz pulse frequency
     localparam integer DutyCycle = 50;  // 50% duty cycle
-    localparam integer OffsetPercent = 0;
+    localparam integer PulseOffset = 0;
 
     // Signals for the pulse_generator instance
     logic enable;
@@ -22,7 +22,7 @@ module nexys_a7_fpga_libs (
         .CLK_FREQ(ClkFreq),
         .PULSE_FREQ(PulseFreq),
         .DUTY_CYCLE(DutyCycle),
-        .OFFSET_PERCENT(OffsetPercent)
+        .PULSE_OFFSET(PulseOffset)
     ) pulse_gen (
         .clk(clk100mhz),
         .rst(~cpu_resetn),

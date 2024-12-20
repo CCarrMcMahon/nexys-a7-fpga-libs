@@ -9,7 +9,7 @@
  * @param CLK_FREQ Clock frequency in Hz (default: 100 MHz)
  * @param PULSE_FREQ Pulse frequency in Hz (default: 100 Hz)
  * @param DUTY_CYCLE Duty cycle of the pulse as a percentage of the period (default: 10%)
- * @param OFFSET_PERCENT Offset to the start of the pulse as a percentage of the period (default: 0%)
+ * @param PULSE_OFFSET Offset to the start of the pulse as a percentage of the period (default: 0%)
  *
  * @input clk Input clock
  * @input rst Reset signal
@@ -25,7 +25,7 @@ module pulse_generator #(
     parameter integer CLK_FREQ = 100_000_000,
     parameter integer PULSE_FREQ = 100,
     parameter integer DUTY_CYCLE = 10,
-    parameter integer OFFSET_PERCENT = 0
+    parameter integer PULSE_OFFSET = 0
 ) (
     // Main clock and reset signals
     input logic clk,
@@ -42,7 +42,7 @@ module pulse_generator #(
     // Calculate the number of clock cycles for the period, duty cycle, and offset
     localparam integer PulsePeriod = CLK_FREQ / PULSE_FREQ;
     localparam integer PulseWidth = (PulsePeriod * DUTY_CYCLE) / 100;
-    localparam integer PulseOffset = (PulsePeriod * OFFSET_PERCENT) / 100;
+    localparam integer PulseOffset = (PulsePeriod * PULSE_OFFSET) / 100;
 
     // Counter to keep track of the current clock cycle within the period
     logic [$clog2(PulsePeriod)-1:0] counter;

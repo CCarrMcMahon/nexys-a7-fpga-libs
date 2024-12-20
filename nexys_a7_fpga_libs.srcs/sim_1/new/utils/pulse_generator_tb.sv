@@ -14,8 +14,8 @@ module pulse_generator_tb;
     // Parameters for the pulse_generator instance
     parameter integer CLK_FREQ = 100_000_000;
     parameter integer PULSE_FREQ = 1_000_000;
-    parameter integer WIDTH_PERCENT = 10;
-    parameter integer OFFSET_PERCENT = 50;
+    parameter integer DUTY_CYCLE = 10;
+    parameter integer PULSE_OFFSET = 50;
 
     // Clock and reset signals
     logic clk;
@@ -32,8 +32,8 @@ module pulse_generator_tb;
     pulse_generator #(
         .CLK_FREQ(CLK_FREQ),
         .PULSE_FREQ(PULSE_FREQ),
-        .WIDTH_PERCENT(WIDTH_PERCENT),
-        .OFFSET_PERCENT(OFFSET_PERCENT)
+        .DUTY_CYCLE(DUTY_CYCLE),
+        .PULSE_OFFSET(PULSE_OFFSET)
     ) uut (
         .clk(clk),
         .rst(rst),

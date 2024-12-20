@@ -5,32 +5,42 @@ module nexys_a7_fpga_libs (
     output logic [15:0] led
 );
 
-    logic [31:0] counter;
-    logic slow_clk;
+    // Parameters for the pulse_generator instance
+    localparam integer ClkFreq = 100_000_000;
+    localparam integer PulseFreq = 10;  // 10 Hz pulse frequency
+    localparam integer WidthPercent = 50;  // 50% duty cycle
+    localparam integer OffsetPercent = 0;
 
-    // Clock divider to create a slower clock
-    always_ff @(posedge clk100mhz or negedge cpu_resetn) begin
-        if (!cpu_resetn) begin
-            counter  <= 32'd0;
-            slow_clk <= 1'b0;
-        end else begin
-            // Divide 100 MHz clock by 5 million and toggle the output to get a 10 Hz clock
-            if (counter == 32'd5_000_000 - 1) begin
-                counter  <= 32'd0;
-                slow_clk <= ~slow_clk;
-            end else begin
-                counter <= counter + 1;
-            end
-        end
-    end
+    // Signals for the pulse_generator instance
+    logic enable;
+    logic clear;
+    logic pulse_output;
+
+    // Instantiate the pulse_generator module
+    pulse_generator #(
+        .CLK_FREQ(ClkFreq),
+        .PULSE_FREQ(PulseFreq),
+        .WIDTH_PERCENT(WidthPercent),
+        .OFFSET_PERCENT(OffsetPercent)
+    ) pulse_gen (
+        .clk(clk100mhz),
+        .rst(~cpu_resetn),
+        .enable(enable),
+        .clear(clear),
+        .pulse_output(pulse_output)
+    );
 
     // LED control logic
-    always_ff @(posedge slow_clk or negedge cpu_resetn) begin
+    always_ff @(posedge pulse_output or negedge cpu_resetn) begin
         if (!cpu_resetn) begin
             led <= 16'b0;
         end else begin
             led <= sw;
         end
     end
+
+    // Enable the pulse generator
+    assign enable = 1;
+    assign clear  = 0;
 
 endmodule

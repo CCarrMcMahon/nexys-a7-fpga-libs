@@ -76,7 +76,7 @@ module clock_generator #(
         end else if (sync_clear) begin
             counter <= 0;
         end else if (sync_enable) begin
-            // Increment the counter and reset if it reaches the division ratio
+            // Increment the counter and reset if it reaches the division ratio - 1
             if (counter == ClockDivisionRatio - 1) begin
                 counter <= 0;
             end else begin

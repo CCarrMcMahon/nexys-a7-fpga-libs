@@ -6,7 +6,7 @@
  * @param CLK_OUT_FREQ Output clock frequency in Hz (default: 1_000_000)
  * @param PHASE_SHIFT Phase shift of the output clock as a percentage of the period (default: 0.0)
  * @param DUTY_CYCLE Duty cycle of the output clock as a percentage of the period (default: 50.0)
- * @param IDLE_STATE Idle state of the output clock (default: 0)
+ * @param IDLE_VALUE Idle value of the output clock (default: 0)
  *
  * @input clk Main clock signal
  * @input rst Asynchronous reset signal
@@ -23,7 +23,7 @@ module clock_generator #(
     parameter integer CLK_OUT_FREQ = 1_000_000,
     parameter real PHASE_SHIFT = 0.0,
     parameter real DUTY_CYCLE = 50.0,
-    parameter logic IDLE_STATE = 0
+    parameter logic IDLE_VALUE = 0
 ) (
     // Main clock and reset signals
     input logic clk,
@@ -88,15 +88,15 @@ module clock_generator #(
     // Clock logic
     always_comb begin
         if (sync_clear) begin
-            clk_out = IDLE_STATE;
+            clk_out = IDLE_VALUE;
         end else if (!sync_enable) begin
-            clk_out = IDLE_STATE;
+            clk_out = IDLE_VALUE;
         end else begin
             // Generate the clock signal based on the phase shift and duty cycle
             if (PhaseOffset <= counter && counter < PhaseOffset + PulseWidth) begin
-                clk_out = ~IDLE_STATE;
+                clk_out = ~IDLE_VALUE;
             end else begin
-                clk_out = IDLE_STATE;
+                clk_out = IDLE_VALUE;
             end
         end
     end

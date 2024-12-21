@@ -32,6 +32,7 @@ module clock_generator #(
     // Clock generation control signals
     input logic clear,
     input logic enable,
+    input logic active,
 
     // Clock output signal
     output logic clk_out
@@ -45,9 +46,13 @@ module clock_generator #(
     // Counter to generate the clock signal based on the divider
     logic [$clog2(ClockDivisionRatio)-1:0] counter;
 
-    // Synchronized clear and enable signals
+    // Flag to indicate when the phase offset is done
+    logic offset_done;
+
+    // Synchronized control signals
     logic sync_clear;
     logic sync_enable;
+    logic sync_active;
 
     // Instantiate synchronizer for clear signal
     synchronizer #(
@@ -69,34 +74,52 @@ module clock_generator #(
         .sync_signal(sync_enable)
     );
 
+    // Instantiate synchronizer for active signal
+    synchronizer #(
+        .STAGES(2)
+    ) active_synchronizer (
+        .clk(clk),
+        .rst(rst),
+        .async_signal(active),
+        .sync_signal(sync_active)
+    );
+
     // Counter logic
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             counter <= 0;
+            clk_out <= IDLE_VALUE;
+            offset_done <= 0;
         end else if (sync_clear) begin
             counter <= 0;
-        end else if (sync_enable) begin
-            // Increment the counter and reset if it reaches the division ratio - 1
-            if (counter == ClockDivisionRatio - 1) begin
-                counter <= 0;
-            end else begin
-                counter <= counter + 1;
-            end
-        end
-    end
-
-    // Clock logic
-    always_comb begin
-        if (sync_clear) begin
-            clk_out = IDLE_VALUE;
+            clk_out <= IDLE_VALUE;
+            offset_done <= 0;
         end else if (!sync_enable) begin
-            clk_out = IDLE_VALUE;
+            counter <= 0;
+            clk_out <= IDLE_VALUE;
+        end else if (!sync_active) begin
+            clk_out <= IDLE_VALUE;
         end else begin
-            // Generate the clock signal based on the phase shift and duty cycle
-            if (PhaseOffset <= counter && counter < PhaseOffset + PulseWidth) begin
-                clk_out = ~IDLE_VALUE;
+            if (offset_done || counter == PhaseOffset) begin
+                offset_done <= 1;
+                if (counter < PulseWidth) begin
+                    clk_out <= ~IDLE_VALUE;
+                    counter <= counter + 1;
+                end else begin
+                    clk_out <= IDLE_VALUE;
+                    if (counter == ClockDivisionRatio - 1) begin
+                        counter <= 0;
+                    end else begin
+                        counter <= counter + 1;
+                    end
+                end
             end else begin
-                clk_out = IDLE_VALUE;
+                if (counter == PhaseOffset) begin
+                    counter <= 0;
+                    offset_done <= 1;
+                end else begin
+                    counter <= counter + 1;
+                end
             end
         end
     end

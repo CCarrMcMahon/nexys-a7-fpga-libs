@@ -7,11 +7,11 @@
     "verilog.formatting.systemVerilog.formatter": "verible-verilog-format",
     "verilog.formatting.verilogHDL.formatter": "verible-verilog-format",
     "verilog.formatting.verilogFormat.path": "C:\\Program Files\\verible\\verible-verilog-format.exe",
-    "verilog.formatting.veribleVerilogFormatter.arguments": "--column_limit=120 --indentation_spaces=4",
+    "verilog.formatting.veribleVerilogFormatter.arguments": "--column_limit=100 --indentation_spaces=4",
     "verilog.formatting.veribleVerilogFormatter.path": "C:\\Program Files\\verible\\verible-verilog-format.exe",
     "verilog.languageServer.veribleVerilogLs.enabled": true,
     "verilog.languageServer.veribleVerilogLs.path": "C:\\Program Files\\verible\\verible-verilog-ls.exe",
-    "verilog.languageServer.veribleVerilogLs.arguments": "--rules=+line-length=length:120,-no-tabs",
+    "verilog.languageServer.veribleVerilogLs.arguments": "--rules=+line-length=length:100,-no-tabs",
     "[verilog]": {
         "editor.defaultFormatter": "mshr-h.veriloghdl"
     },

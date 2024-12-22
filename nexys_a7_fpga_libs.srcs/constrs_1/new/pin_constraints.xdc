@@ -38,7 +38,7 @@ set_property -dict {PACKAGE_PIN C12 IOSTANDARD LVCMOS33} [get_ports cpu_resetn]
 ### PTA-142: 4 Pin Button, SMT
 # set_property -dict {PACKAGE_PIN M18 IOSTANDARD LVCMOS33} [get_ports {btnu}];  # IO_L4N_T0_D05_14
 # set_property -dict {PACKAGE_PIN P17 IOSTANDARD LVCMOS33} [get_ports {btnl}];  # IO_L12P_T1_MRCC_14
-# set_property -dict {PACKAGE_PIN N17 IOSTANDARD LVCMOS33} [get_ports {btnc}];  # IO_L9P_T1_DQS_14
+set_property -dict {PACKAGE_PIN N17 IOSTANDARD LVCMOS33} [get_ports {btnc}];  # IO_L9P_T1_DQS_14
 # set_property -dict {PACKAGE_PIN M17 IOSTANDARD LVCMOS33} [get_ports {btnr}];  # IO_L10N_T1_D15_14
 # set_property -dict {PACKAGE_PIN P18 IOSTANDARD LVCMOS33} [get_ports {btnd}];  # IO_L9N_T1_DQS_D13_14
 
@@ -115,9 +115,9 @@ set_property -dict {PACKAGE_PIN V11 IOSTANDARD LVCMOS33} [get_ports {led[15]}]
 ### PMOD-2x6-S: Pmod System Board Header 2x6, 100mil spaced
 ## JA
 set_property -dict {PACKAGE_PIN C17 IOSTANDARD LVCMOS33} [get_ports {ja[0]}];  # IO_L20N_T3_A19_15
-# set_property -dict {PACKAGE_PIN D18 IOSTANDARD LVCMOS33} [get_ports {ja[1]}];  # IO_L21N_T3_DQS_A18_15
-# set_property -dict {PACKAGE_PIN E18 IOSTANDARD LVCMOS33} [get_ports {ja[2]}];  # IO_L21P_T3_DQS_15
-# set_property -dict {PACKAGE_PIN G17 IOSTANDARD LVCMOS33} [get_ports {ja[3]}];  # IO_L18N_T2_A23_15
+set_property -dict {PACKAGE_PIN D18 IOSTANDARD LVCMOS33} [get_ports {ja[1]}];  # IO_L21N_T3_DQS_A18_15
+set_property -dict {PACKAGE_PIN E18 IOSTANDARD LVCMOS33} [get_ports {ja[2]}];  # IO_L21P_T3_DQS_15
+set_property -dict {PACKAGE_PIN G17 IOSTANDARD LVCMOS33} [get_ports {ja[3]}];  # IO_L18N_T2_A23_15
 # set_property -dict {PACKAGE_PIN D17 IOSTANDARD LVCMOS33} [get_ports {ja[4]}];  # IO_L16N_T2_A27_15
 # set_property -dict {PACKAGE_PIN E17 IOSTANDARD LVCMOS33} [get_ports {ja[5]}];  # IO_L16P_T2_A28_15
 # set_property -dict {PACKAGE_PIN F18 IOSTANDARD LVCMOS33} [get_ports {ja[6]}];  # IO_L22N_T3_A16_15

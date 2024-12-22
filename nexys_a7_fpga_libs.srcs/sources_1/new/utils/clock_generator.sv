@@ -2,6 +2,11 @@
  * @module clock_generator
  * @brief Generates a configurable clock signal.
  *
+ * This module generates a configurable clock signal from an input clock by implementing
+ * a digital clock divider. It supports customizable frequency division, phase shifting,
+ * and duty cycle adjustment. The module includes synchronization for control signals
+ * and maintains clock phase alignment when disabled and re-enabled.
+ *
  * @param CLK_IN_FREQ Input clock frequency in Hz (default: 100_000_000)
  * @param CLK_OUT_FREQ Output clock frequency in Hz (default: 1_000_000)
  * @param PHASE_SHIFT Phase shift of the output clock as a percentage of the period (default: 0.0)
@@ -10,8 +15,8 @@
  *
  * @input clk Main clock signal
  * @input rst Asynchronous reset signal
- * @input clear Clear signal for clock generation
- * @input enable Enable signal for clock generation
+ * @input clear Synchronous clear signal for resetting clock generation
+ * @input enable Enable signal to start/stop clock generation while maintaining phase
  *
  * @output clk_out Generated clock signal
  *

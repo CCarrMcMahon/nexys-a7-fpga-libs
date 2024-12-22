@@ -57,11 +57,10 @@ module clock_generator #(
     localparam integer ClockDivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;
     localparam integer PhaseOffset = ClockDivisionRatio * (PHASE_SHIFT / 100.0);
     localparam integer PulseWidth = ClockDivisionRatio * (DUTY_CYCLE / 100.0);
-    localparam integer ClockDivisionRatioBits = $clog2(ClockDivisionRatio);
-    localparam integer CounterBits = ClockDivisionRatioBits ? ClockDivisionRatioBits - 1 : 0;
+    localparam integer CounterBits = $clog2(ClockDivisionRatio + 1);
 
     // Counter to generate the clock signal based on the divider
-    logic [CounterBits:0] counter;
+    logic [CounterBits - 1:0] counter;
 
     // Flag to indicate when the phase offset is done
     logic offset_done;

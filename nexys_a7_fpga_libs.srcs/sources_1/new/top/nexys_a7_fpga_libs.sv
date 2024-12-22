@@ -4,20 +4,19 @@ module nexys_a7_fpga_libs (
     input logic btnc,
     input logic [15:0] sw,
     output logic [15:0] led,
-    output logic [4:0] ja
+    output logic [3:0] ja
 );
 
     // Parameters for the clock_generator instance
     localparam integer ClkInFreq = 100_000_000;
     localparam integer ClockOutFreq = 2;
-    localparam real PhaseShift = 75.0;
+    localparam real PhaseShift = 0.0;
     localparam real DutyCycle = 50.0;
     localparam logic IdleValue = 0;
 
     // Signals for the clock_generator instance
     logic clear;
     logic enable;
-    logic active;
     logic clk_out;
 
     // Instantiate the clock_generator module
@@ -32,7 +31,6 @@ module nexys_a7_fpga_libs (
         .rst(~cpu_resetn),
         .clear(clear),
         .enable(enable),
-        .active(active),
         .clk_out(clk_out)
     );
 
@@ -41,14 +39,13 @@ module nexys_a7_fpga_libs (
         if (!cpu_resetn) begin
             led <= 16'b0;
         end else begin
-            led <= sw[15:2];
+            led <= sw[15:1];
         end
     end
 
     // Assign the clock generator signals
     assign clear = btnc;
     assign enable = sw[0];
-    assign active = sw[1];
-    assign ja = {clk_out, active, enable, clear, cpu_resetn};
+    assign ja = {clk_out, enable, clear, cpu_resetn};
 
 endmodule

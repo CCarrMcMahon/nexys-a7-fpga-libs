@@ -32,7 +32,6 @@ module clock_generator #(
     // Clock generation control signals
     input logic clear,
     input logic enable,
-    input logic active,
 
     // Clock output signal
     output logic clk_out
@@ -52,7 +51,6 @@ module clock_generator #(
     // Synchronized control signals
     logic sync_clear;
     logic sync_enable;
-    logic sync_active;
 
     // Instantiate synchronizer for clear signal
     synchronizer #(
@@ -74,16 +72,6 @@ module clock_generator #(
         .sync_signal(sync_enable)
     );
 
-    // Instantiate synchronizer for active signal
-    synchronizer #(
-        .STAGES(2)
-    ) active_synchronizer (
-        .clk(clk),
-        .rst(rst),
-        .async_signal(active),
-        .sync_signal(sync_active)
-    );
-
     // Counter logic
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
@@ -95,9 +83,7 @@ module clock_generator #(
             clk_out <= IDLE_VALUE;
             offset_done <= 0;
         end else if (!sync_enable) begin
-            counter <= 0;
-            clk_out <= IDLE_VALUE;
-        end else if (!sync_active) begin
+            // Don't reset the counter so the clock can be resumed
             clk_out <= IDLE_VALUE;
         end else begin
             if (offset_done || counter == PhaseOffset) begin

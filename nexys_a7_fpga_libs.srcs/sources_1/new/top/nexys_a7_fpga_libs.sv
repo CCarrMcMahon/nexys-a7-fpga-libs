@@ -4,7 +4,7 @@ module nexys_a7_fpga_libs (
     input logic btnc,
     input logic [15:0] sw,
     output logic [15:0] led,
-    output logic [3:0] ja
+    output logic [4:0] ja
 );
 
     // Parameters for the clock_generator instance
@@ -46,6 +46,6 @@ module nexys_a7_fpga_libs (
     // Assign the clock generator signals
     assign clear = btnc;
     assign enable = sw[0];
-    assign ja = {clk_out, enable, clear, cpu_resetn};
+    assign ja = {clk_out, enable, clear, clk100mhz, cpu_resetn};
 
 endmodule

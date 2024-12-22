@@ -24,11 +24,11 @@
  * @date 12-21-2024
  */
 module clock_generator #(
-    parameter integer CLK_IN_FREQ = 100_000_000,
-    parameter integer CLK_OUT_FREQ = 1_000_000,
-    parameter real PHASE_SHIFT = 0.0,
-    parameter real DUTY_CYCLE = 50.0,
-    parameter logic IDLE_VALUE = 0
+    parameter integer CLK_IN_FREQ = 100_000_000,  // 0 < CLK_IN_FREQ <= clk
+    parameter integer CLK_OUT_FREQ = 1_000_000,  // 0 < CLK_OUT_FREQ <= CLK_IN_FREQ
+    parameter real PHASE_SHIFT = 0.0,  // 0 <= PHASE_SHIFT <= 100
+    parameter real DUTY_CYCLE = 50.0,  // 0 <= DUTY_CYCLE <= 100
+    parameter logic IDLE_VALUE = 0  // 0 <= IDLE_VALUE <= 1
 ) (
     // Main clock and reset signals
     input logic clk,
@@ -42,13 +42,26 @@ module clock_generator #(
     output logic clk_out
 );
 
+    // Parameter constraints
+    // 0 < CLK_IN_FREQ
+    // 0 < CLK_OUT_FREQ <= CLK_IN_FREQ
+    // 0 <= PHASE_SHIFT <= 100
+    // 0 <= DUTY_CYCLE <= 100
+
+    // Local parameter constraints
+    // 1 <= ClockDivisionRatio
+    // 0 <= PhaseOffset <= ClockDivisionRatio
+    // 0 <= PulseWidth <= ClockDivisionRatio
+
     // Constants for the clock generation
     localparam integer ClockDivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;
     localparam integer PhaseOffset = ClockDivisionRatio * (PHASE_SHIFT / 100.0);
     localparam integer PulseWidth = ClockDivisionRatio * (DUTY_CYCLE / 100.0);
+    localparam integer ClockDivisionRatioBits = $clog2(ClockDivisionRatio);
+    localparam integer CounterBits = ClockDivisionRatioBits ? ClockDivisionRatioBits - 1 : 0;
 
     // Counter to generate the clock signal based on the divider
-    logic [$clog2(ClockDivisionRatio)-1:0] counter;
+    logic [CounterBits:0] counter;
 
     // Flag to indicate when the phase offset is done
     logic offset_done;
@@ -81,37 +94,40 @@ module clock_generator #(
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             counter <= 0;
-            clk_out <= IDLE_VALUE;
             offset_done <= 0;
         end else if (sync_clear) begin
             counter <= 0;
-            clk_out <= IDLE_VALUE;
             offset_done <= 0;
-        end else if (!sync_enable) begin
-            // Don't reset the counter so the clock can be resumed
-            clk_out <= IDLE_VALUE;
-        end else begin
-            if (offset_done || counter == PhaseOffset) begin
+        end else if (sync_enable) begin
+            // Increment the counter until the ClockDivisionRatio is reached
+            if (counter == ClockDivisionRatio - 1) begin
+                counter <= 0;
                 offset_done <= 1;
-                if (counter < PulseWidth) begin
-                    clk_out <= ~IDLE_VALUE;
-                    counter <= counter + 1;
-                end else begin
-                    clk_out <= IDLE_VALUE;
-                    if (counter == ClockDivisionRatio - 1) begin
-                        counter <= 0;
-                    end else begin
-                        counter <= counter + 1;
-                    end
-                end
             end else begin
-                if (counter == PhaseOffset) begin
-                    counter <= 0;
-                    offset_done <= 1;
-                end else begin
-                    counter <= counter + 1;
-                end
+                counter <= counter + 1;
             end
+
+            // Set the offset done flag when the phase offset is reached
+            if (counter == PhaseOffset) begin
+                offset_done <= 1;
+            end
+        end
+    end
+
+    always_comb begin
+        // Wait for the offset to be done before updating clock
+        if (sync_enable && offset_done) begin
+            // If PulseWidth is zero, the clock is always idle
+            if (counter < PulseWidth) begin
+                // Pulse starts at zero since the offset has been removed
+                clk_out = ~IDLE_VALUE;
+            end else begin
+                // Pulse ends at the specified width
+                clk_out = IDLE_VALUE;
+            end
+        end else begin
+            // Clock is idle until the phase offset is done
+            clk_out = IDLE_VALUE;
         end
     end
 

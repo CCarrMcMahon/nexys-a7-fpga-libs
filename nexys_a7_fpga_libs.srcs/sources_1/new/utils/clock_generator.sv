@@ -108,7 +108,8 @@ module clock_generator #(
             end
 
             // Set the offset done flag when the phase offset is reached
-            if (counter == PhaseOffset) begin
+            if (!offset_done && counter == PhaseOffset) begin
+                counter <= 0;
                 offset_done <= 1;
             end
         end

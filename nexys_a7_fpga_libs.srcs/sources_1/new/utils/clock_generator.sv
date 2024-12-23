@@ -2,39 +2,41 @@
  * @module clock_generator
  * @brief Generates a configurable clock signal.
  *
- * This module generates a configurable clock signal from an input clock by implementing
- * a digital clock divider. It supports customizable frequency division, phase shifting,
- * and duty cycle adjustment. The module includes synchronization for control signals
- * and maintains clock phase alignment when disabled and re-enabled.
+ * This module generates a configurable clock signal from an input clock by implementing a digital
+ * clock divider. If the input and output frequencies are the same, the module will bypass the
+ * divider and directly output the input clock signal while accounting for the IDLE_VALUE. It
+ * supports customizable frequency division, phase shifting, and duty cycle adjustment. The module
+ * also includes synchronization for control signals and maintains clock phase alignment when
+ * disabled and re-enabled.
  *
- * @param CLK_IN_FREQ Input clock frequency in Hz (default: 100_000_000)
- * @param CLK_OUT_FREQ Output clock frequency in Hz (default: 1_000_000)
- * @param PHASE_SHIFT Phase shift of the output clock as a percentage of the period (default: 0.0)
- * @param DUTY_CYCLE Duty cycle of the output clock as a percentage of the period (default: 50.0)
- * @param IDLE_VALUE Idle value of the output clock (default: 0)
+ * @param CLK_IN_FREQ Input clock frequency in Hz (0.0, clk freq]
+ * @param CLK_OUT_FREQ Output clock frequency in Hz (0.0, CLK_IN_FREQ]
+ * @param PHASE_SHIFT Phase shift as percentage of clock period [0.0, 100.0]
+ * @param DUTY_CYCLE Duty cycle as percentage of clock period [0.0, 100.0]
+ * @param IDLE_VALUE Output value when clock is disabled [0, 1]
  *
  * @input clk Main clock signal
  * @input rst Asynchronous reset signal
- * @input clear Synchronous clear signal for resetting clock generation
- * @input enable Enable signal to start/stop clock generation while maintaining phase
+ * @input clear Synchronous clear signal (2-cycle delay)
+ * @input enable Clock generation enable (2-cycle delay)
  *
  * @output clk_out Generated clock signal
  *
  * @designer Christopher McMahon
- * @date 12-21-2024
+ * @date 12-22-2024
  */
 module clock_generator #(
-    parameter integer CLK_IN_FREQ = 100_000_000,  // 0 < CLK_IN_FREQ <= clk
-    parameter integer CLK_OUT_FREQ = 1_000_000,  // 0 < CLK_OUT_FREQ <= CLK_IN_FREQ
-    parameter real PHASE_SHIFT = 0.0,  // 0 <= PHASE_SHIFT <= 100
-    parameter real DUTY_CYCLE = 50.0,  // 0 <= DUTY_CYCLE <= 100
-    parameter logic IDLE_VALUE = 0  // 0 <= IDLE_VALUE <= 1
+    parameter real  CLK_IN_FREQ  = 100_000_000,
+    parameter real  CLK_OUT_FREQ = 1_000_000,
+    parameter real  PHASE_SHIFT  = 0.0,
+    parameter real  DUTY_CYCLE   = 50.0,
+    parameter logic IDLE_VALUE   = 0
 ) (
     // Main clock and reset signals
     input logic clk,
     input logic rst,
 
-    // Clock generation control signals (Minimum delay of 2 clock cycles)
+    // Clock generation control signals
     input logic clear,
     input logic enable,
 
@@ -42,17 +44,12 @@ module clock_generator #(
     output logic clk_out
 );
 
-    // Local parameter constraints
-    // 1 <= ClockDivisionRatio
-    // 0 <= PhaseOffset <= ClockDivisionRatio
-    // 0 <= PulseWidth <= ClockDivisionRatio
-    // 1 <= CounterBits
-
     // Constants for the clock generation
-    localparam integer ClockDivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;
-    localparam integer PhaseOffset = ClockDivisionRatio * (PHASE_SHIFT / 100.0);
-    localparam integer PulseWidth = ClockDivisionRatio * (DUTY_CYCLE / 100.0);
-    localparam integer CounterBits = $clog2(ClockDivisionRatio + 1);
+    localparam real DivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;  // [1, INF)
+    localparam integer ClockDivisionRatio = int'(DivisionRatio);  // [1, INF)
+    localparam integer PhaseOffset = int'(DivisionRatio * (PHASE_SHIFT / 100.0));  // [0, Ratio]
+    localparam integer PulseWidth = int'(DivisionRatio * (DUTY_CYCLE / 100.0));  // [0, Ratio]
+    localparam integer CounterBits = $clog2(ClockDivisionRatio + 1);  // [1, INF)
 
     // Counter to generate the clock signal based on the divider
     logic [CounterBits - 1:0] counter;

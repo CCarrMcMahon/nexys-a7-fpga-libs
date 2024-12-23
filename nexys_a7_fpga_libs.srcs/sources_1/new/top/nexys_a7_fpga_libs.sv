@@ -8,10 +8,10 @@ module nexys_a7_fpga_libs (
 );
 
     // Parameters for the clock_generator instance
-    localparam integer ClkInFreq = 100_000_000;
-    localparam integer ClockOutFreq = 1_000_000;
-    localparam real PhaseShift = 50.0;
-    localparam real DutyCycle = 50.0;
+    localparam real ClkInFreq = 100_000_000;
+    localparam real ClockOutFreq = 0.36;
+    localparam real PhaseShift = 38.4;
+    localparam real DutyCycle = 12.75;
     localparam logic IdleValue = 0;
 
     // Signals for the clock_generator instance

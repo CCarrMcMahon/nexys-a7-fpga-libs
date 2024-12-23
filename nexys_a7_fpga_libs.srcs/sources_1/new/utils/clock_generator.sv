@@ -108,6 +108,7 @@ module clock_generator #(
         end
     end
 
+    // Clock generation logic
     always_comb begin
         // Direct bypass when frequencies match
         if (ClockDivisionRatio == 1) begin

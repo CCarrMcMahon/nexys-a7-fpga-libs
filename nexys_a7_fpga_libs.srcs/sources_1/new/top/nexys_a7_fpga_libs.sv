@@ -2,8 +2,7 @@ module nexys_a7_fpga_libs (
     input logic clk100mhz,
     input logic cpu_resetn,
     input logic btnc,
-    input logic [15:0] sw,
-    output logic [15:0] led,
+    input logic [0:0] sw,
     output logic [4:0] ja
 );
 
@@ -33,15 +32,6 @@ module nexys_a7_fpga_libs (
         .enable(enable),
         .clk_out(clk_out)
     );
-
-    // LED control logic
-    always_ff @(posedge clk_out or negedge cpu_resetn) begin
-        if (!cpu_resetn) begin
-            led <= 16'b0;
-        end else begin
-            led <= sw[15:1];
-        end
-    end
 
     // Assign the clock generator signals
     assign clear = btnc;

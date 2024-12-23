@@ -34,7 +34,7 @@ module clock_generator #(
     input logic clk,
     input logic rst,
 
-    // Clock generation control signals
+    // Clock generation control signals (Minimum delay of 2 clock cycles)
     input logic clear,
     input logic enable,
 
@@ -42,16 +42,11 @@ module clock_generator #(
     output logic clk_out
 );
 
-    // Parameter constraints
-    // 0 < CLK_IN_FREQ
-    // 0 < CLK_OUT_FREQ <= CLK_IN_FREQ
-    // 0 <= PHASE_SHIFT <= 100
-    // 0 <= DUTY_CYCLE <= 100
-
     // Local parameter constraints
     // 1 <= ClockDivisionRatio
     // 0 <= PhaseOffset <= ClockDivisionRatio
     // 0 <= PulseWidth <= ClockDivisionRatio
+    // 1 <= CounterBits
 
     // Constants for the clock generation
     localparam integer ClockDivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;
@@ -94,40 +89,42 @@ module clock_generator #(
         if (rst) begin
             counter <= 0;
             offset_done <= 0;
-        end else if (sync_clear) begin
-            counter <= 0;
-            offset_done <= 0;
-        end else if (sync_enable) begin
-            // Increment the counter until the ClockDivisionRatio is reached
-            if (counter == ClockDivisionRatio - 1) begin
+        end else if (ClockDivisionRatio != 1) begin
+            if (sync_clear) begin
                 counter <= 0;
-                offset_done <= 1;
-            end else begin
-                counter <= counter + 1;
-            end
+                offset_done <= 0;
+            end else if (sync_enable) begin
+                // Increment the counter until the ClockDivisionRatio is reached
+                if (counter == ClockDivisionRatio - 1) begin
+                    counter <= 0;
+                    offset_done <= 1;
+                end else begin
+                    counter <= counter + 1;
+                end
 
-            // Set the offset done flag when the phase offset is reached
-            if (!offset_done && counter == PhaseOffset) begin
-                counter <= 0;
-                offset_done <= 1;
+                // Set the offset done flag when the phase offset is reached
+                if (!offset_done && counter == PhaseOffset) begin
+                    counter <= 0;
+                    offset_done <= 1;
+                end
             end
         end
     end
 
     always_comb begin
-        // Wait for the offset to be done before updating clock
-        if (sync_enable && offset_done) begin
-            // If PulseWidth is zero, the clock is always idle
-            if (counter < PulseWidth) begin
-                // Pulse starts at zero since the offset has been removed
-                clk_out = ~IDLE_VALUE;
+        // Direct bypass when frequencies match
+        if (ClockDivisionRatio == 1) begin
+            if (!sync_clear && sync_enable) begin
+                clk_out = (IDLE_VALUE == 0) ? clk : ~clk;
             end else begin
-                // Pulse ends at the specified width
                 clk_out = IDLE_VALUE;
             end
         end else begin
-            // Clock is idle until the phase offset is done
-            clk_out = IDLE_VALUE;
+            if (sync_enable && offset_done && counter < PulseWidth) begin
+                clk_out = ~IDLE_VALUE;
+            end else begin
+                clk_out = IDLE_VALUE;
+            end
         end
     end
 

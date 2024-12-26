@@ -61,8 +61,8 @@ module clock_generator #(
     logic sync_clear;
     logic sync_enable;
 
-    // Instantiate synchronizer for clear signal
-    synchronizer #(
+    // Instantiate a 2-ff synchronizer for the clear signal
+    multi_flop_synchronizer #(
         .STAGES(2)
     ) clear_synchronizer (
         .clk(clk),
@@ -71,8 +71,8 @@ module clock_generator #(
         .sync_signal(sync_clear)
     );
 
-    // Instantiate synchronizer for enable signal
-    synchronizer #(
+    // Instantiate a 2-ff synchronizer for the enable signal
+    multi_flop_synchronizer #(
         .STAGES(2)
     ) enable_synchronizer (
         .clk(clk),

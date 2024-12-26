@@ -1,10 +1,11 @@
 /**
- * @module synchronizer
+ * @module multi_flop_synchronizer
  * @brief Synchronizes an asynchronous signal to a clock domain.
  *
- * This module synchronizes an asynchronous signal to a clock domain using a chain of flip-flops. The number of stages
- * can be configured using the STAGES parameter. The input signal is shifted into the chain of flip-flops on the rising
- * edge of the clock. The synchronized signal is output on the last stage of the chain.
+ * This module synchronizes an asynchronous signal to a clock domain using a chain of flip-flops.
+ * The number of stages can be configured using the STAGES parameter. The input signal is shifted
+ * into the chain of flip-flops on the rising edge of the clock. The synchronized signal is output
+ * on the last stage of the chain.
  *
  * @param STAGES Number of synchronization stages, must be >= 2 (default: 2)
  *
@@ -17,7 +18,7 @@
  * @designer Christopher McMahon
  * @date 12-19-2024
  */
-module synchronizer #(
+module multi_flop_synchronizer #(
     parameter integer STAGES = 2
 ) (
     // Main clock and reset signals

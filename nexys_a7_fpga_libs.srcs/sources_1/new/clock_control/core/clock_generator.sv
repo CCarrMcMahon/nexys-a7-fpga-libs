@@ -52,7 +52,7 @@ module clock_generator #(
     localparam integer CounterBits = $clog2(ClockDivisionRatio + 1);  // [1, INF)
 
     // Counter to generate the clock signal based on the divider
-    logic [CounterBits - 1:0] counter;
+    logic [CounterBits-1:0] counter;
 
     // Flag to indicate when the phase offset is done
     logic offset_done;

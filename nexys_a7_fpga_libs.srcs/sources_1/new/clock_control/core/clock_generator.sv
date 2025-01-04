@@ -45,7 +45,7 @@ module clock_generator #(
 );
 
     // Constants for the clock generation
-    localparam real DivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;  // [1, INF)
+    localparam real DivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;  // [1.0, INF)
     localparam integer ClockDivisionRatio = int'(DivisionRatio);  // [1, INF)
     localparam integer PhaseOffset = int'(DivisionRatio * (PHASE_SHIFT / 100.0));  // [0, Ratio]
     localparam integer PulseWidth = int'(DivisionRatio * (DUTY_CYCLE / 100.0));  // [0, Ratio]

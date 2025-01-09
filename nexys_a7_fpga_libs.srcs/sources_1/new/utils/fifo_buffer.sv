@@ -49,11 +49,13 @@ module fifo_buffer #(
 );
 
     // Status flags
-    localparam int Full = 5'b10000;
-    localparam int AlmostFull = 5'b01000;
-    localparam int HalfFull = 5'b00100;
-    localparam int AlmostEmpty = 5'b00010;
-    localparam int Empty = 5'b00001;
+    typedef enum logic [4:0] {
+        Empty = 5'b00001,
+        AlmostEmpty = 5'b00010,
+        HalfFull = 5'b00100,
+        AlmostFull = 5'b01000,
+        Full = 5'b10000
+    } status_flags_t;
 
     // State definitions
     typedef enum logic [1:0] {
@@ -125,9 +127,9 @@ module fifo_buffer #(
             end
             IDLE: begin
                 // Priority: read > write
-                if (!status[Empty] && dout_acked_synced) begin
+                if (!(status & status_flags_t'(Empty)) && dout_acked_synced) begin
                     next_state = READ;
-                end else if (!status[Full] && din_valid_synced) begin
+                end else if (!(status & status_flags_t'(Full)) && din_valid_synced) begin
                     next_state = WRITE;
                 end
             end
@@ -170,11 +172,27 @@ module fifo_buffer #(
 
     // Status logic
     always_comb begin
-        status[Full] = (fifo_depth == DEPTH);
-        status[AlmostFull] = (fifo_depth >= DEPTH - 1);
-        status[HalfFull] = (fifo_depth >= DEPTH / 2);
-        status[AlmostEmpty] = (fifo_depth <= 1);
-        status[Empty] = (fifo_depth == 0);
+        status = 5'b00000;
+
+        if (fifo_depth == 0) begin
+            status = status | status_flags_t'({Empty});
+        end
+
+        if (fifo_depth <= 1) begin
+            status = status | status_flags_t'({AlmostEmpty});
+        end
+
+        if (fifo_depth >= DEPTH / 2) begin
+            status = status | status_flags_t'({HalfFull});
+        end
+
+        if (fifo_depth >= DEPTH - 1) begin
+            status = status | status_flags_t'({AlmostFull});
+        end
+
+        if (fifo_depth == DEPTH) begin
+            status = status | status_flags_t'({Full});
+        end
     end
 
     // There is valid data in the FIFO if the write and read pointers are not equal

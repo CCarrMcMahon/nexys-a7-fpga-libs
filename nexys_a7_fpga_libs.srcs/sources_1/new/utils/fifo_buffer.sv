@@ -48,7 +48,7 @@ module fifo_buffer #(
     output logic [4:0] status
 );
 
-    // Status flags
+    // Constants
     typedef enum logic [4:0] {
         Empty = 5'b00001,
         AlmostEmpty = 5'b00010,
@@ -57,24 +57,29 @@ module fifo_buffer #(
         Full = 5'b10000
     } status_flags_t;
 
-    // State definitions
     typedef enum logic [1:0] {
-        RESET,
-        IDLE,
-        WRITE,
-        READ
-    } state_t;
-    state_t curr_state, next_state;
+        RESET_WRITE,
+        WAIT_DIN_VALID,
+        WRITE_BUFFER,
+        WAIT_DIN_INVALID
+    } write_state_t;
 
-    // Internal buffer
+    typedef enum logic [1:0] {
+        RESET_READ,
+        WAIT_DOUT_VALID,
+        WAIT_DOUT_INVALID,
+        READ_BUFFER
+    } read_state_t;
+
+    // Internal signals
+    write_state_t curr_write_state, next_write_state;
+    read_state_t curr_read_state, next_read_state;
+
     logic [WIDTH-1:0] buffer[DEPTH];
-
-    // Internal pointers
     logic [$clog2(DEPTH)-1:0] write_ptr;
     logic [$clog2(DEPTH)-1:0] read_ptr;
-    logic [$clog2(DEPTH+1)-1:0] fifo_depth;
+    logic [$clog2(DEPTH)-1:0] buffer_depth;
 
-    // Synchronized control signals
     logic clear_synced;
     logic din_valid_synced;
     logic dout_acked_synced;
@@ -109,93 +114,141 @@ module fifo_buffer #(
     // Current state transition logic
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            curr_state <= RESET;
+            curr_write_state <= RESET_WRITE;
+            curr_read_state  <= RESET_READ;
         end else if (clear_synced) begin
-            curr_state <= RESET;
+            curr_write_state <= RESET_WRITE;
+            curr_read_state  <= RESET_READ;
         end else begin
-            curr_state <= next_state;
+            curr_write_state <= next_write_state;
+            curr_read_state  <= next_read_state;
         end
     end
 
-    // Next state transition logic
+    // Next write state transition logic
     always_comb begin
-        next_state = curr_state;
+        next_write_state = curr_write_state;
 
-        case (curr_state)
-            RESET: begin
-                next_state = IDLE;
+        unique case (curr_write_state)
+            RESET_WRITE: begin
+                next_write_state = WAIT_DIN_VALID;
             end
-            IDLE: begin
-                // Priority: read > write
-                if (!(status & status_flags_t'(Empty)) && dout_acked_synced) begin
-                    next_state = READ;
-                end else if (!(status & status_flags_t'(Full)) && din_valid_synced) begin
-                    next_state = WRITE;
+            WAIT_DIN_VALID: begin
+                if (!(status & status_flags_t'(Full))) begin
+                    if (din_valid_synced) begin
+                        next_write_state = WRITE_BUFFER;
+                    end
                 end
             end
-            WRITE: begin
-                next_state = IDLE;
+            WRITE_BUFFER: begin
+                next_write_state = WAIT_DIN_INVALID;
             end
-            READ: begin
-                next_state = IDLE;
+            WAIT_DIN_INVALID: begin
+                // Wait for the input data to stop being valid indicating the ack has been received
+                if (!din_valid_synced) begin
+                    next_write_state = WAIT_DIN_VALID;
+                end
             end
-            default: next_state = IDLE;
         endcase
     end
 
-    // FIFO buffer logic
+    // Write buffer logic
     always_ff @(posedge clk) begin
-        unique case (curr_state)
-            RESET: begin
-                dout <= '0;
-                ack_din <= 1'b0;
+        unique case (curr_write_state)
+            RESET_WRITE: begin
+                ack_din   <= 1'b0;
                 write_ptr <= '0;
-                read_ptr <= '0;
-                fifo_depth <= '0;
             end
-            IDLE: begin
+            WAIT_DIN_VALID: begin
                 ack_din <= 1'b0;
             end
-            WRITE: begin
+            WRITE_BUFFER: begin
                 buffer[write_ptr] <= din;
                 write_ptr <= (write_ptr + 1) % DEPTH;
-                fifo_depth <= fifo_depth + 1;
+            end
+            WAIT_DIN_INVALID: begin
                 ack_din <= 1'b1;
             end
-            READ: begin
+        endcase
+    end
+
+    // Next read state transition logic
+    always_comb begin
+        next_read_state = curr_read_state;
+
+        unique case (curr_read_state)
+            RESET_READ: begin
+                next_read_state = WAIT_DOUT_VALID;
+            end
+            WAIT_DOUT_VALID: begin
+                if (!(status & status_flags_t'(Empty))) begin
+                    if (dout_acked_synced) begin
+                        next_read_state = WAIT_DOUT_INVALID;
+                    end
+                end
+            end
+            WAIT_DOUT_INVALID: begin
+                if (!dout_acked_synced) begin
+                    next_read_state = READ_BUFFER;
+                end
+            end
+            READ_BUFFER: begin
+                if (!dout_acked_synced) begin
+                    next_read_state = WAIT_DOUT_VALID;
+                end
+            end
+        endcase
+    end
+
+    // Read buffer logic
+    always_ff @(posedge clk) begin
+        unique case (curr_read_state)
+            RESET_READ: begin
+                dout <= '0;
+                dout_valid <= 1'b0;
+                read_ptr <= '0;
+            end
+            WAIT_DOUT_VALID: begin
+                // There is valid data in the FIFO if the write and read pointers are not equal
+                dout_valid <= (write_ptr != read_ptr);
+            end
+            WAIT_DOUT_INVALID: begin
+                dout_valid <= 1'b0;
+            end
+            READ_BUFFER: begin
                 dout <= buffer[read_ptr];
                 read_ptr <= (read_ptr + 1) % DEPTH;
-                fifo_depth <= fifo_depth - 1;
             end
         endcase
     end
 
     // Status logic
     always_comb begin
-        status = 5'b00000;
+        // Calculate the buffer depth
+        buffer_depth = DEPTH - 1;
+        if (write_ptr >= read_ptr) begin
+            buffer_depth = write_ptr - read_ptr;
+        end else begin
+            buffer_depth = DEPTH - read_ptr + write_ptr;
+        end
 
-        if (fifo_depth == 0) begin
+        // Update the status flags
+        status = 5'b00000;
+        if (buffer_depth == 0) begin
             status = status | status_flags_t'({Empty});
         end
-
-        if (fifo_depth <= 1) begin
+        if (buffer_depth <= 1) begin
             status = status | status_flags_t'({AlmostEmpty});
         end
-
-        if (fifo_depth >= DEPTH / 2) begin
+        if (buffer_depth >= DEPTH / 2) begin
             status = status | status_flags_t'({HalfFull});
         end
-
-        if (fifo_depth >= DEPTH - 1) begin
+        if (buffer_depth >= DEPTH - 2) begin
             status = status | status_flags_t'({AlmostFull});
         end
-
-        if (fifo_depth == DEPTH) begin
+        if (buffer_depth == DEPTH - 1) begin
             status = status | status_flags_t'({Full});
         end
     end
-
-    // There is valid data in the FIFO if the write and read pointers are not equal
-    assign dout_valid = (write_ptr != read_ptr);
 
 endmodule

@@ -67,8 +67,8 @@ module fifo_buffer #(
 
     typedef enum logic [1:0] {
         RESET_READ,
-        WAIT_DOUT_VALID,
-        WAIT_DOUT_INVALID,
+        WAIT_DOUT_ACKED,
+        WAIT_DOUT_NACKED,
         READ_BUFFER
     } read_state_t;
 
@@ -179,22 +179,22 @@ module fifo_buffer #(
 
         unique case (curr_read_state)
             RESET_READ: begin
-                next_read_state = WAIT_DOUT_VALID;
+                next_read_state = WAIT_DOUT_ACKED;
             end
-            WAIT_DOUT_VALID: begin
+            WAIT_DOUT_ACKED: begin
                 if ((status & status_flags_t'(Empty)) != status_flags_t'(Empty)) begin
                     if (dout_acked_synced) begin
-                        next_read_state = WAIT_DOUT_INVALID;
+                        next_read_state = WAIT_DOUT_NACKED;
                     end
                 end
             end
-            WAIT_DOUT_INVALID: begin
+            WAIT_DOUT_NACKED: begin
                 if (!dout_acked_synced) begin
                     next_read_state = READ_BUFFER;
                 end
             end
             READ_BUFFER: begin
-                next_read_state = WAIT_DOUT_VALID;
+                next_read_state = WAIT_DOUT_ACKED;
             end
         endcase
     end
@@ -207,11 +207,11 @@ module fifo_buffer #(
                 dout_valid <= 1'b0;
                 read_ptr <= '0;
             end
-            WAIT_DOUT_VALID: begin
+            WAIT_DOUT_ACKED: begin
                 // There is valid data in the FIFO if the write and read pointers are not equal
                 dout_valid <= (write_ptr != read_ptr);
             end
-            WAIT_DOUT_INVALID: begin
+            WAIT_DOUT_NACKED: begin
                 dout_valid <= 1'b0;
             end
             READ_BUFFER: begin

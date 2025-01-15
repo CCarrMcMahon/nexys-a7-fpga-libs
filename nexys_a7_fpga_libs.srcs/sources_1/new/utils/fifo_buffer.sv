@@ -49,6 +49,7 @@ module fifo_buffer #(
 );
 
     // Constants
+    // TODO: Move to a common package so they can be shared across modules
     typedef enum logic [4:0] {
         Empty = 5'b00001,
         AlmostEmpty = 5'b00010,
@@ -134,7 +135,7 @@ module fifo_buffer #(
                 next_write_state = WAIT_DIN_VALID;
             end
             WAIT_DIN_VALID: begin
-                if (!(status & status_flags_t'(Full))) begin
+                if ((status & status_flags_t'(Full)) != status_flags_t'(Full)) begin
                     if (din_valid_synced) begin
                         next_write_state = WRITE_BUFFER;
                     end
@@ -181,7 +182,7 @@ module fifo_buffer #(
                 next_read_state = WAIT_DOUT_VALID;
             end
             WAIT_DOUT_VALID: begin
-                if (!(status & status_flags_t'(Empty))) begin
+                if ((status & status_flags_t'(Empty)) != status_flags_t'(Empty)) begin
                     if (dout_acked_synced) begin
                         next_read_state = WAIT_DOUT_INVALID;
                     end
@@ -193,9 +194,7 @@ module fifo_buffer #(
                 end
             end
             READ_BUFFER: begin
-                if (!dout_acked_synced) begin
-                    next_read_state = WAIT_DOUT_VALID;
-                end
+                next_read_state = WAIT_DOUT_VALID;
             end
         endcase
     end

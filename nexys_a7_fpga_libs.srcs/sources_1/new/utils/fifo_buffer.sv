@@ -49,6 +49,8 @@ module fifo_buffer #(
 );
 
     // Constants
+    localparam int unsigned PtrWidth = $clog2(DEPTH);
+
     // TODO: Move to a common package so they can be shared across modules
     typedef enum logic [4:0] {
         Empty = 5'b00001,
@@ -58,10 +60,11 @@ module fifo_buffer #(
         Full = 5'b10000
     } status_flags_t;
 
-    typedef enum logic [1:0] {
+    typedef enum logic [2:0] {
         RESET_WRITE,
         WAIT_DIN_VALID,
         WRITE_BUFFER,
+        INCR_WRITE_PTR,
         WAIT_DIN_INVALID
     } write_state_t;
 
@@ -69,18 +72,22 @@ module fifo_buffer #(
         RESET_READ,
         WAIT_DOUT_ACKED,
         WAIT_DOUT_NACKED,
-        READ_BUFFER
+        INCR_READ_PTR
     } read_state_t;
 
-    // Internal signals
+    // State variables
     write_state_t curr_write_state, next_write_state;
     read_state_t curr_read_state, next_read_state;
 
+    // Buffer signals
     logic [WIDTH-1:0] buffer[DEPTH];
-    logic [$clog2(DEPTH)-1:0] write_ptr;
-    logic [$clog2(DEPTH)-1:0] read_ptr;
-    logic [$clog2(DEPTH)-1:0] buffer_depth;
+    logic [PtrWidth-1:0] write_ptr;
+    logic [PtrWidth-1:0] read_ptr;
+    logic [PtrWidth-1:0] buffer_depth;  // Careful with calculation to avoid overflow
+    logic write_ptr_wrapped;
+    logic read_ptr_wrapped;
 
+    // Synchronized signals
     logic clear_synced;
     logic din_valid_synced;
     logic dout_acked_synced;
@@ -135,20 +142,23 @@ module fifo_buffer #(
                 next_write_state = WAIT_DIN_VALID;
             end
             WAIT_DIN_VALID: begin
-                if ((status & status_flags_t'(Full)) != status_flags_t'(Full)) begin
-                    if (din_valid_synced) begin
-                        next_write_state = WRITE_BUFFER;
-                    end
+                if (!is_full && din_valid_synced) begin
+                    next_write_state = WRITE_BUFFER;
                 end
             end
             WRITE_BUFFER: begin
+                next_write_state = INCR_WRITE_PTR;
+            end
+            INCR_WRITE_PTR: begin
                 next_write_state = WAIT_DIN_INVALID;
             end
             WAIT_DIN_INVALID: begin
-                // Wait for the input data to stop being valid indicating the ack has been received
                 if (!din_valid_synced) begin
                     next_write_state = WAIT_DIN_VALID;
                 end
+            end
+            default: begin
+                next_write_state = RESET_WRITE;
             end
         endcase
     end
@@ -157,18 +167,29 @@ module fifo_buffer #(
     always_ff @(posedge clk) begin
         unique case (curr_write_state)
             RESET_WRITE: begin
-                ack_din   <= 1'b0;
+                ack_din <= 1'b0;
                 write_ptr <= '0;
+                write_ptr_wrapped <= 1'b0;
             end
             WAIT_DIN_VALID: begin
                 ack_din <= 1'b0;
             end
             WRITE_BUFFER: begin
                 buffer[write_ptr] <= din;
-                write_ptr <= (write_ptr + 1) % DEPTH;
+            end
+            INCR_WRITE_PTR: begin
+                if (write_ptr == DEPTH - 1) begin
+                    write_ptr <= '0;
+                    write_ptr_wrapped <= ~write_ptr_wrapped;
+                end else begin
+                    write_ptr <= write_ptr + 1;
+                end
             end
             WAIT_DIN_INVALID: begin
                 ack_din <= 1'b1;
+            end
+            default: begin
+                // No Action: State machine will reset
             end
         endcase
     end
@@ -182,19 +203,20 @@ module fifo_buffer #(
                 next_read_state = WAIT_DOUT_ACKED;
             end
             WAIT_DOUT_ACKED: begin
-                if ((status & status_flags_t'(Empty)) != status_flags_t'(Empty)) begin
-                    if (dout_acked_synced) begin
-                        next_read_state = WAIT_DOUT_NACKED;
-                    end
+                if (!is_empty && dout_acked_synced) begin
+                    next_read_state = WAIT_DOUT_NACKED;
                 end
             end
             WAIT_DOUT_NACKED: begin
                 if (!dout_acked_synced) begin
-                    next_read_state = READ_BUFFER;
+                    next_read_state = INCR_READ_PTR;
                 end
             end
-            READ_BUFFER: begin
+            INCR_READ_PTR: begin
                 next_read_state = WAIT_DOUT_ACKED;
+            end
+            default: begin
+                next_read_state = RESET_READ;
             end
         endcase
     end
@@ -206,48 +228,69 @@ module fifo_buffer #(
                 dout <= '0;
                 dout_valid <= 1'b0;
                 read_ptr <= '0;
+                read_ptr_wrapped <= 1'b0;
             end
             WAIT_DOUT_ACKED: begin
-                // There is valid data in the FIFO if the write and read pointers are not equal
-                dout_valid <= (write_ptr != read_ptr);
+                dout <= buffer[read_ptr];
+                dout_valid <= !is_empty;
             end
             WAIT_DOUT_NACKED: begin
                 dout_valid <= 1'b0;
             end
-            READ_BUFFER: begin
-                dout <= buffer[read_ptr];
-                read_ptr <= (read_ptr + 1) % DEPTH;
+            INCR_READ_PTR: begin
+                if (read_ptr == DEPTH - 1) begin
+                    read_ptr <= '0;
+                    read_ptr_wrapped <= ~read_ptr_wrapped;
+                end else begin
+                    read_ptr <= read_ptr + 1;
+                end
+            end
+            default: begin
+                // No Action: State machine will reset
             end
         endcase
     end
 
     // Status logic
     always_comb begin
+        // Set default values
+        buffer_depth = '0;
+        status = '0;
+
         // Calculate the buffer depth
-        buffer_depth = DEPTH - 1;
         if (write_ptr >= read_ptr) begin
+            // Both empty and full conditions have a depth of 0 to avoid overflow
             buffer_depth = write_ptr - read_ptr;
         end else begin
             buffer_depth = DEPTH - read_ptr + write_ptr;
         end
 
         // Update the status flags
-        status = 5'b00000;
         if (buffer_depth == 0) begin
-            status = status | status_flags_t'({Empty});
-        end
-        if (buffer_depth <= 1) begin
-            status = status | status_flags_t'({AlmostEmpty});
-        end
-        if (buffer_depth >= DEPTH / 2) begin
-            status = status | status_flags_t'({HalfFull});
-        end
-        if (buffer_depth >= DEPTH - 2) begin
-            status = status | status_flags_t'({AlmostFull});
-        end
-        if (buffer_depth == DEPTH - 1) begin
-            status = status | status_flags_t'({Full});
+            // Both empty and full conditions have 0 depth so compare wrapped values
+            if (write_ptr_wrapped == read_ptr_wrapped) begin
+                status = status | status_flags_t'({Empty});
+                status = status | status_flags_t'({AlmostEmpty});
+            end else begin
+                status = status | status_flags_t'({HalfFull});
+                status = status | status_flags_t'({AlmostFull});
+                status = status | status_flags_t'({Full});
+            end
+        end else begin
+            if (buffer_depth <= 1) begin
+                status = status | status_flags_t'({AlmostEmpty});
+            end
+            if (buffer_depth >= (DEPTH + 1) / 2) begin
+                status = status | status_flags_t'({HalfFull});
+            end
+            if (buffer_depth >= DEPTH - 1) begin
+                status = status | status_flags_t'({AlmostFull});
+            end
         end
     end
+
+    // Assignments
+    assign is_empty = (status & status_flags_t'(Empty)) == status_flags_t'(Empty);
+    assign is_full  = (status & status_flags_t'(Full)) == status_flags_t'(Full);
 
 endmodule

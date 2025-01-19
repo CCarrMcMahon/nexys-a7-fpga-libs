@@ -8,8 +8,8 @@
  * also utilizes a handshaking mechanism to ensure that data is only read or written once the other
  * side has acknowledged the operation.
  *
- * @param  WIDTH       Number of bits in the data bus (default: 8)
- * @param  DEPTH       Number of entries in the FIFO buffer (default: 256)
+ * @param  WIDTH       Number of bits in the data bus [1, INF)
+ * @param  DEPTH       Number of entries in the FIFO buffer [2, INF)
  *
  * @input  clk         Main clock signal
  * @input  rst         Asynchronous reset signal
@@ -49,7 +49,9 @@ module fifo_buffer #(
 );
 
     // Constants
-    localparam int unsigned PtrWidth = $clog2(DEPTH);
+    localparam int unsigned Width = (WIDTH >= 1) ? WIDTH : 1;
+    localparam int unsigned Depth = (DEPTH >= 2) ? DEPTH : 2;
+    localparam int unsigned PtrWidth = $clog2(Depth);
 
     // TODO: Move to a common package so they can be shared across modules
     typedef enum logic [4:0] {
@@ -80,7 +82,7 @@ module fifo_buffer #(
     read_state_t curr_read_state, next_read_state;
 
     // Buffer signals
-    logic [WIDTH-1:0] buffer[DEPTH];
+    logic [Width-1:0] buffer[Depth];
     logic [PtrWidth-1:0] write_ptr;
     logic [PtrWidth-1:0] read_ptr;
     logic [PtrWidth-1:0] buffer_depth;  // Careful with calculation to avoid overflow

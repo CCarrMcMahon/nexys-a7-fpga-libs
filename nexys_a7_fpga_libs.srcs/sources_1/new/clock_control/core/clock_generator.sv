@@ -37,15 +37,15 @@ module clock_generator #(
     input logic clk,
     input logic rst,
 
-    // Clock generation control signals
+    // Control signals
     input logic clear,
     input logic enable,
 
-    // Clock output signal
+    // Generated clock signal
     output logic clk_out
 );
 
-    // Constants for the clock generation
+    // Constants
     localparam real DivisionRatio = CLK_IN_FREQ / CLK_OUT_FREQ;  // [1.0, INF)
     localparam integer ClockDivisionRatio = int'(DivisionRatio);  // [1, INF)
     localparam integer PhaseOffset = int'(DivisionRatio * (PHASE_SHIFT / 100.0));  // [0, Ratio]
@@ -85,25 +85,25 @@ module clock_generator #(
     // Counter logic
     always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
-            counter <= 0;
-            offset_done <= 0;
+            counter <= '0;
+            offset_done <= 1'b0;
         end else if (ClockDivisionRatio != 1) begin
             if (sync_clear) begin
-                counter <= 0;
-                offset_done <= 0;
+                counter <= '0;
+                offset_done <= 1'b0;
             end else if (sync_enable) begin
                 // Increment the counter until the ClockDivisionRatio is reached
                 if (counter == ClockDivisionRatio - 1) begin
-                    counter <= 0;
-                    offset_done <= 1;
+                    counter <= 1'b0;
+                    offset_done <= 1'b1;
                 end else begin
                     counter <= counter + 1;
                 end
 
                 // Set the offset done flag when the phase offset is reached
                 if (!offset_done && counter == PhaseOffset) begin
-                    counter <= 0;
-                    offset_done <= 1;
+                    counter <= 1'b0;
+                    offset_done <= 1'b1;
                 end
             end
         end

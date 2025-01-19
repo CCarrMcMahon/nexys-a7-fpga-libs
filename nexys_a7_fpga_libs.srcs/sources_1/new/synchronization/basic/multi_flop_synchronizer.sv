@@ -7,19 +7,20 @@
  * into the chain of flip-flops on the rising edge of the clock. The synchronized signal is output
  * on the last stage of the chain.
  *
- * @param STAGES Number of synchronization stages, must be >= 2 (default: 2)
+ * @param  STAGES        Number of synchronization stages, must be >= 2 (default: 2)
  *
- * @input clk Input clock
- * @input rst Reset signal
- * @input async_signal Asynchronous input signal
+ * @input  clk           Main clock signal
+ * @input  rst           Asynchronous reset signal
+ * @input  async_signal  Asynchronous input signal
  *
- * @output sync_signal Synchronized output signal
+ * @output sync_signal   Synchronized output signal
  *
- * @designer Christopher McMahon
- * @date 12-19-2024
+ * @designer  Christopher McMahon
+ * @created   12-19-2024
+ * @modified  01-19-2025
  */
 module multi_flop_synchronizer #(
-    parameter integer STAGES = 2
+    parameter int STAGES = 2
 ) (
     // Main clock and reset signals
     input logic clk,
@@ -32,21 +33,24 @@ module multi_flop_synchronizer #(
     output logic sync_signal
 );
 
+    // Constants
+    localparam int unsigned Stages = (STAGES >= 2) ? STAGES : 2;
+
     // Register array to hold synchronization stages
-    logic [STAGES-1:0] sync_stages;
+    logic [Stages-1:0] sync_stages;
 
     // Synchronization process triggered on the rising edge of the clock or reset
-    always @(posedge clk or posedge rst) begin
+    always_ff @(posedge clk or posedge rst) begin
         if (rst) begin
             // Reset the synchronization stages to 0
-            sync_stages <= {STAGES{1'b0}};
+            sync_stages <= {Stages{1'b0}};
         end else begin
             // Shift in the async signal
-            sync_stages <= {sync_stages[STAGES-2:0], async_signal};
+            sync_stages <= {sync_stages[Stages-2:0], async_signal};
         end
     end
 
     // Output the signal synchronized to the clock domain
-    assign sync_signal = sync_stages[STAGES-1];
+    assign sync_signal = sync_stages[Stages-1];
 
 endmodule

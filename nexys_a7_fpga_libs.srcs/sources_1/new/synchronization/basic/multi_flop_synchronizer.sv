@@ -7,7 +7,7 @@
  * into the chain of flip-flops on the rising edge of the clock. The synchronized signal is output
  * on the last stage of the chain.
  *
- * @param  STAGES        Number of synchronization stages, must be >= 2 (default: 2)
+ * @param  STAGES        Number of synchronization stages [2, INF)
  *
  * @input  clk           Main clock signal
  * @input  rst           Asynchronous reset signal

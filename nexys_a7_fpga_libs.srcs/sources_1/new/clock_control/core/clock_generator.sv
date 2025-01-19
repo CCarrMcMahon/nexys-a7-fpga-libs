@@ -9,21 +9,22 @@
  * also includes synchronization for control signals and maintains clock phase alignment when
  * disabled and re-enabled.
  *
- * @param CLK_IN_FREQ Input clock frequency in Hz (0.0, clk freq]
- * @param CLK_OUT_FREQ Output clock frequency in Hz (0.0, CLK_IN_FREQ]
- * @param PHASE_SHIFT Phase shift as percentage of clock period [0.0, 100.0]
- * @param DUTY_CYCLE Duty cycle as percentage of clock period [0.0, 100.0]
- * @param IDLE_VALUE Output value when clock is disabled [0, 1]
+ * @param  CLK_IN_FREQ   Input clock frequency in Hz (0.0, clk freq]
+ * @param  CLK_OUT_FREQ  Output clock frequency in Hz (0.0, CLK_IN_FREQ]
+ * @param  PHASE_SHIFT   Phase shift as percentage of clock period [0.0, 100.0]
+ * @param  DUTY_CYCLE    Duty cycle as percentage of clock period [0.0, 100.0]
+ * @param  IDLE_VALUE    Output value when clock is disabled [0, 1]
  *
- * @input clk Main clock signal
- * @input rst Asynchronous reset signal
- * @input clear Synchronous clear signal (2-cycle delay)
- * @input enable Clock generation enable (2-cycle delay)
+ * @input  clk           Main clock signal
+ * @input  rst           Asynchronous reset signal
+ * @input  clear         Clear signal to reset the clock counter
+ * @input  enable        Enable signal to generate the clock signal
  *
- * @output clk_out Generated clock signal
+ * @output clk_out       Generated clock signal
  *
- * @designer Christopher McMahon
- * @date 12-22-2024
+ * @designer  Christopher McMahon
+ * @created   12-22-2024
+ * @modified  01-19-2025
  */
 module clock_generator #(
     parameter real  CLK_IN_FREQ  = 100_000_000,
